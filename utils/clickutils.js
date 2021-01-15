@@ -5,7 +5,7 @@ function relativeMousePos(event, target) {
 
   var rect = target.getBoundingClientRect();
   if(event.type == 'touchstart' || event.type == 'touchmove' || event.type == 'touchend' || event.type == 'touchcancel'){
-    var evt = (typeof e.originalEvent === 'undefined') ? e : e.originalEvent;
+    var evt = (typeof event.originalEvent === 'undefined') ? event : event.originalEvent;
     var touch = evt.touches[0] || evt.changedTouches[0];
     return {x: touch.pageX - rect.left, y: touch.pageY - rect.top}
   }
