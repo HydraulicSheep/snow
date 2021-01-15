@@ -5,6 +5,7 @@ import * as MatrixOps from './utils/2dmatrixops.js'
 import {getCanvasMousePos} from './utils/clickutils.js'
 
 const MAX_PARTICLES = 1000
+const SIDES_PER_CIRCLE = 10;
 
 
 function init() {
@@ -40,10 +41,10 @@ function main(canvas, gl) {
         particles.push(circle);
     }
 
-    // Get Locations of Variables
+    // Get Locations of Variables in the linked program.
     var locOfposAttrb = gl.getAttribLocation(program, "pos");
-    var matrixLocation = gl.getUniformLocation(program, "transformation_matrix");
-    var colorLocation = gl.getUniformLocation(program, "colour");
+    var matrixloc = gl.getUniformLocation(program, "transformation_matrix");
+    var colourloc = gl.getUniformLocation(program, "colour");
 
     tick();
 
@@ -66,6 +67,8 @@ function main(canvas, gl) {
                     particle.y += particle.v;
                     particle.v -= 0.00001;
 
+                    // Calculations to stop too much movement in any direction.
+                    // Adds some random deviations to simulate eddy currents.
                     if (particle.v > 0) {
                         particle.v -= 0.01;
                         particle.vh += (Math.random()-0.5)*0.0001;
@@ -84,12 +87,16 @@ function main(canvas, gl) {
                         particle.vh += 0.01;
                     }
                     
-                    // Handles wind/gust mechanics
+
+                    // Handles click mechanics. Any particle within a circle of radius 0.0625 will be repelled.
                     if (mouseDown && (Math.pow(particle.x-mouseX,2) + Math.pow(particle.y-mouseY,2) < 0.0625)) {
 
+                        // Calculates a displacement vector towards the edge of the circle.
                         var diffVec = [particle.x-mouseX,particle.y-mouseY];
                         var mag = Math.sqrt(Math.pow(diffVec[0],2)+Math.pow(diffVec[1],2));
                         diffVec = [diffVec[0]*0.25/mag,diffVec[1]*0.25/mag];
+
+                        // Partially displaces the particles and gives them a 'scattering velocity'.
                         particle.x += diffVec[0]*0.1;
                         particle.hv += (Math.random()+0.5)*0.01*diffVec[0];
                         particle.y += diffVec[1]*0.1;
@@ -103,16 +110,19 @@ function main(canvas, gl) {
                     particle.x += particle.hv
                     
                 } else {
+                    // If a particle is culled, a new one is added in its place
                     var circle = addSnow(gl);
                     circle.y = 1.001 + circle.radius;
                     newParticles.push(circle)
                 }
 
+                // 1/10 chance of switching the drift direction.
                 if (Math.random()<0.1) {
                     particle.direction ^= 1;
                 }
                 
             }
+            // Only retains particles which are not being culled. This is the culling step.
             particles = newParticles
 
         }
@@ -120,7 +130,9 @@ function main(canvas, gl) {
 
         function renderFrame() {
 
+            // Readjusts canvas size using a utils library - https://webglfundamentals.org
             webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+            
             gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
             // Clear the canvas to black
@@ -137,29 +149,27 @@ function main(canvas, gl) {
                 // Bind the position buffer.
                 gl.bindBuffer(gl.ARRAY_BUFFER, particle.posBuffer);
                 
-                // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
-                var size = 2;          // 2 components per iteration
-                var type = gl.FLOAT;   // the data is 32bit floats
-                var normalize = false; // don't normalize the data
-                var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-                var offset = 0;        // start at the beginning of the buffer
-                gl.vertexAttribPointer(
-                    locOfposAttrb, size, type, normalize, stride, offset)
+                // Indicate how to read data from the position buffer - 2 floats, unnormalized
+                // And with no offset or stride.
+                var size = 2;
+                var type = gl.FLOAT;
+                var normalize = false;
+                gl.vertexAttribPointer(locOfposAttrb, size, type, normalize, 0,0 )
 
+                // Transforms particle location based on its coordinates.
                 var matrix = MatrixOps.translation(particle.x,particle.y);
-                gl.uniformMatrix3fv(matrixLocation, false, matrix);
+                gl.uniformMatrix3fv(matrixloc, false, matrix);
 
-                // Colour snow particle
-                gl.uniform4fv(colorLocation, particle.colour);
+                // Colour snow particle with its unique colour.
+                gl.uniform4fv(colourloc, particle.colour);
                 
         
                 var primitiveType = gl.TRIANGLES;
-                var offset = 0;
-                var count = 10*3;
-                gl.drawArrays(primitiveType, offset, count);
+                var count = SIDES_PER_CIRCLE*3;
+                gl.drawArrays(primitiveType, 0, count);
     
             }
-            
+
             window.requestAnimationFrame(tick);
         }
     }
@@ -187,7 +197,7 @@ function addSnow(gl) {
     circle.colour = [1-r,1-r,1-r,1];
 
     // Creates vertices for the circle and buffers them
-    var vertices = circle.getVertices(10);
+    var vertices = circle.getVertices(SIDES_PER_CIRCLE);
     var posBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);

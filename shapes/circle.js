@@ -10,7 +10,7 @@ export class Circle {
         this.v = -Math.random()*this.radius-0.001;
         this.hv = 0;
         this.colour = colour;
-        this.posBuffer;
+        this.posBuffer; // Stores the buffer of this circle's vertices.
         this.direction;
         this.colour = [];
 
