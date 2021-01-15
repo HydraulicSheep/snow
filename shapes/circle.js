@@ -29,7 +29,7 @@ export class Circle {
             
             vertices.push(x,y);
 
-            vertices.push(this.x, this.y);
+            vertices.push(0, 0);
             theta += angle;
 
             x = this.radius*Math.cos(theta);
