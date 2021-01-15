@@ -1,4 +1,5 @@
 # Snow
 
-A minimal WebGL experiment. Click and Play with Snow.
+A minimal WebGL experiment. Click and play with Snow.
 
+![Home Screen](/images/HomeScreen.png)
