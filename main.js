@@ -2,8 +2,9 @@ import * as BasicShaders from  './shaders/basic_shaders.js'
 import * as BuildTools from  './utils/buildProgram.js'
 import {Circle} from './shapes/circle.js'
 import * as MatrixOps from './utils/2dmatrixops.js'
+import {getCanvasMousePos} from './utils/clickutils.js'
 
-const MAX_PARTICLES = 600
+const MAX_PARTICLES = 1000
 
 
 function init() {
@@ -43,11 +44,6 @@ function main(canvas, gl) {
     var locOfposAttrb = gl.getAttribLocation(program, "pos");
     var matrixLocation = gl.getUniformLocation(program, "transformation_matrix");
     var colorLocation = gl.getUniformLocation(program, "colour");
-    
-    var gustActive = false;
-    var gusty = 0;
-    var gustx = 1;
-    var gustdir = 0;
 
     tick();
 
@@ -59,44 +55,53 @@ function main(canvas, gl) {
         function updateParticles() {
             var newParticles = []
 
-            // Handles wind/gust mechanics
-            
-            if (gustActive && (gustx > 1 || gustx < -1)) {
-                gustActive = false;
-            }
-            else if (!gustActive && Math.random() < 0.1) {
-                gustActive = true;
-                gusty = (Math.random()-0.5)*2;
-                if (Math.random() < 0.5) {
-                    gustx = -1;
-                    gustdir = 1;
-                }
-                else {
-                    gustx = 1;
-                    gustdir = -1;
-                }
-            }
-
-
             for (var particle of particles) {
+
+                // Checks whether the particle should be culled.
                 if (particle.y + particle.radius >= -1) {
+                    
                     newParticles.push(particle);
 
-                    // Moves particle down by a certain speeed and increases this speed over time.
+                    // Does vertical movement and adds downward acceleration.
                     particle.y += particle.v;
                     particle.v -= 0.00001;
-                    
-                    // Handles gust action on particles
-                    if (gustActive && Math.abs(particle.y-gusty)<0.2 && Math.abs(particle.x-gustx)<0.2) {
 
-                        particle.hv += 0.1*gustdir*Math.abs(particle.y-gusty)*Math.abs(particle.x-gustx);
-                        particle.v += (Math.random()-0.8)*0.1*Math.abs(particle.y-gusty)*Math.abs(particle.x-gustx);
+                    if (particle.v > 0) {
+                        particle.v -= 0.01;
+                        particle.vh += (Math.random()-0.5)*0.0001;
+                    }
+
+                    if (particle.v < -0.01) {
+                        particle.v += 0.001;
+                        particle.vh += (Math.random()-0.5)*0.0001;
+                    }
+
+                    if (particle.vh > 0.01) {
+                        particle.vh -= 0.01;
+                    }
+
+                    if (particle.vh < 0.01) {
+                        particle.vh += 0.01;
+                    }
+                    
+                    // Handles wind/gust mechanics
+                    if (mouseDown && (Math.pow(particle.x-mouseX,2) + Math.pow(particle.y-mouseY,2) < 0.0625)) {
+
+                        var diffVec = [particle.x-mouseX,particle.y-mouseY];
+                        var mag = Math.sqrt(Math.pow(diffVec[0],2)+Math.pow(diffVec[1],2));
+                        diffVec = [diffVec[0]*0.25/mag,diffVec[1]*0.25/mag];
+                        particle.x += diffVec[0]*0.1;
+                        particle.hv += (Math.random()+0.5)*0.01*diffVec[0];
+                        particle.y += diffVec[1]*0.1;
+                        particle.v += (Math.random()+0.5)*0.01*diffVec[1];
+
                     }
 
 
                     // Adds horizontal velocity to particle
-                    particle.x += particle.hv
                     particle.hv += Math.random()*0.00001*(particle.direction-0.5)*2;
+                    particle.x += particle.hv
+                    
                 } else {
                     var circle = addSnow(gl);
                     circle.y = 1.001 + circle.radius;
@@ -110,8 +115,8 @@ function main(canvas, gl) {
             }
             particles = newParticles
 
-            gustx += 0.1*gustdir;
         }
+
 
         function renderFrame() {
 
@@ -154,14 +159,10 @@ function main(canvas, gl) {
                 gl.drawArrays(primitiveType, offset, count);
     
             }
+            
             window.requestAnimationFrame(tick);
         }
-
-
     }
-
-    
-
 }
 
 function addSnow(gl) {
@@ -198,3 +199,30 @@ function addSnow(gl) {
 
 
 window.onload = init;
+
+
+/**********************  Event Listeners   **********************/
+
+
+
+var mouseX;
+var mouseY;
+
+// Mouse Click Detection. Allows both left and right clicking simultaneously.
+var mouseDown = 0;
+document.body.onmousedown = function() { 
+  mouseDown++;
+}
+document.body.onmouseup = function() {
+  mouseDown--;
+}
+
+
+window.addEventListener('mousemove', e => {
+    var gl =  document.getElementById("mainCanvas").getContext("webgl");
+    var relPos = getCanvasMousePos(e, gl.canvas);
+
+    mouseX = relPos.x / gl.canvas.width  *  2 - 1;
+    mouseY = relPos.y / gl.canvas.height * -2 + 1;
+});
+
