@@ -1,21 +1,26 @@
 // Basic GLSL Shaders
 
-var vertex_shader = `
+export var vertex_shader = `
 
+    attribute vec4 pos;
 
+    void main() {
 
+        gl_Position = pos;
 
-
+    }
 
 `;
 
 
-var fragment_shader = `
+export var fragment_shader = `
 
+    precision mediump float;
 
+    void main() {
 
+        gl_FragColor = vec4(1,1,1,1);
 
-
-
+    }
 
 `;
