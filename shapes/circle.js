@@ -8,6 +8,7 @@ export class Circle {
         this.x = x;
         this.y = y;
         this.colour = colour;
+        this.posBuffer;
 
 
 

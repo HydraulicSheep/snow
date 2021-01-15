@@ -3,7 +3,7 @@ import * as BuildTools from  './utils/buildProgram.js'
 import {Circle} from './shapes/circle.js'
 import * as MatrixOps from './utils/2dmatrixops.js'
 
-const MAX_PARTICLES = 2
+const MAX_PARTICLES = 100
 
 
 function init() {
@@ -34,59 +34,60 @@ function main(canvas, gl) {
     var particles = []
 
     for (var i=0;i<MAX_PARTICLES;i++) {
-        var randx = (Math.random()-0.5)*2;
-        var randy = (Math.random()-0.5)*2;
-        var circle = new Circle(0.05,randx, randy);
+        
+        var circle = addSnow(gl);
         particles.push(circle);
     }
 
-    
-
+    // Get Locations of Variables
     var locOfposAttrb = gl.getAttribLocation(program, "pos");
     var matrixLocation = gl.getUniformLocation(program, "transformation_matrix");
+    
 
 
     tick();
 
     function tick() {
 
-        //updateParticles();
+        updateParticles();
         renderFrame();
 
         function updateParticles() {
-
+            var newParticles = []
             for (var particle of particles) {
-                particle.y -= 0.001;
-                particle.x += (Math.random()-0.5)*0.01
+                if (particle.y + particle.radius >= -1) {
+                    newParticles.push(particle);
+                    particle.y -= 0.002;
+                    particle.x += (Math.random()-0.5)*0.001
+                } else {
+                    var circle = addSnow(gl);
+                    circle.y = 1.001 + circle.radius;
+                    newParticles.push(circle)
+                }
+                
             }
+            particles = newParticles
 
         }
 
         function renderFrame() {
 
-            var vertices = []
+            webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+            // Clear the canvas to black
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
+            gl.useProgram(program);
 
             for (var particle of particles) {
-                var vertices = vertices.concat(particle.getVertices(5));
             
-
-                var posBuffer = gl.createBuffer();
-                gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-
-                webglUtils.resizeCanvasToDisplaySize(gl.canvas);
-                gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-        
-                // Clear the canvas to black
-                gl.clearColor(0.0, 0.0, 0.0, 1.0);
-                gl.clear(gl.COLOR_BUFFER_BIT);
                 
-                gl.useProgram(program);
                 gl.enableVertexAttribArray(locOfposAttrb);
         
                 // Bind the position buffer.
-                gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+                gl.bindBuffer(gl.ARRAY_BUFFER, particle.posBuffer);
                 
                 // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
                 var size = 2;          // 2 components per iteration
@@ -102,11 +103,11 @@ function main(canvas, gl) {
         
                 var primitiveType = gl.TRIANGLES;
                 var offset = 0;
-                var count = vertices.length/2;
+                var count = 10*3;
                 gl.drawArrays(primitiveType, offset, count);
     
             }
-            
+            window.requestAnimationFrame(tick);
         }
 
 
@@ -114,6 +115,21 @@ function main(canvas, gl) {
 
     
 
+}
+
+function addSnow(gl) {
+
+    var randx = (Math.random()-0.5)*2;
+    var randy = (Math.random()-0.5)*2;
+    var circle = new Circle(0.005,randx, randy);
+    
+
+    var vertices = circle.getVertices(10);
+    var posBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    circle.posBuffer = posBuffer;
+    return circle;
 }
 
 

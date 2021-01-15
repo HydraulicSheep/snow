@@ -2,12 +2,12 @@
 
 export var vertex_shader = `
 
-    attribute vec3 pos;
+    attribute vec2 pos;
     uniform mat3 transformation_matrix;
 
     void main() {
 
-        gl_Position = vec4(transformation_matrix*pos,1);
+        gl_Position = vec4((transformation_matrix*vec3(pos,1)).xy,0,1);
 
     }
 
