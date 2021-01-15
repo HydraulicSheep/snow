@@ -3,7 +3,7 @@ import * as BuildTools from  './utils/buildProgram.js'
 import {Circle} from './shapes/circle.js'
 import * as MatrixOps from './utils/2dmatrixops.js'
 
-const MAX_PARTICLES = 100
+const MAX_PARTICLES = 200
 
 
 function init() {
@@ -57,12 +57,22 @@ function main(canvas, gl) {
             for (var particle of particles) {
                 if (particle.y + particle.radius >= -1) {
                     newParticles.push(particle);
-                    particle.y -= 0.002;
-                    particle.x += (Math.random()-0.5)*0.001
+
+                    // Moves particle down by a certain speeed and increases this speed over time.
+                    particle.y += particle.v;
+                    particle.v -= 0.00001;
+
+                    // Adds horizontal velocity to particle
+                    particle.x += particle.hv
+                    particle.hv += Math.random()*0.00001*(particle.direction-0.5)*2;
                 } else {
                     var circle = addSnow(gl);
                     circle.y = 1.001 + circle.radius;
                     newParticles.push(circle)
+                }
+
+                if (Math.random()<0.1) {
+                    particle.direction ^= 1;
                 }
                 
             }
@@ -121,8 +131,13 @@ function addSnow(gl) {
 
     var randx = (Math.random()-0.5)*2;
     var randy = (Math.random()-0.5)*2;
-    var circle = new Circle(0.005,randx, randy);
+    var circle = new Circle(Math.random()*0.005,randx, randy);
     
+    if (Math.random()<0.5) {
+        circle.direction = 0;
+    } else {
+        circle.direction = 1;
+    }
 
     var vertices = circle.getVertices(10);
     var posBuffer = gl.createBuffer();

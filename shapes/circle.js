@@ -7,8 +7,11 @@ export class Circle {
         this.radius = radius;
         this.x = x;
         this.y = y;
+        this.v = -Math.random()*this.radius-0.001;
+        this.hv = 0;
         this.colour = colour;
         this.posBuffer;
+        this.direction;
 
 
 
