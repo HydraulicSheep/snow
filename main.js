@@ -220,6 +220,7 @@ var mouseY;
 
 // Mouse Click Detection. Allows both left and right clicking simultaneously.
 var mouseDown = 0;
+
 document.body.onmousedown = function() { 
   mouseDown++;
   document.getElementById('overlay').style.display = 'none';
@@ -232,6 +233,7 @@ document.body.ontouchstart = function() {
   
 document.body.ontouchend = function() {
   mouseDown--;
+  console.log(mouseDown);
 }
 
 document.body.onmouseup = function() {
