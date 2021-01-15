@@ -222,6 +222,7 @@ var mouseY;
 var mouseDown = 0;
 document.body.onmousedown = function() { 
   mouseDown++;
+  document.getElementById('overlay').style.display = 'none';
 }
 document.body.onmouseup = function() {
   mouseDown--;
