@@ -12,7 +12,7 @@ export class Circle {
         this.colour = colour;
         this.posBuffer;
         this.direction;
-
+        this.colour = [];
 
 
     }
@@ -27,7 +27,6 @@ export class Circle {
         var theta = 0;
 
         while(theta < 2*Math.PI) {
-            console.log(theta);
             var x = this.radius*Math.cos(theta);
             var y = this.radius*Math.sin(theta);
             

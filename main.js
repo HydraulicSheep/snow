@@ -3,7 +3,7 @@ import * as BuildTools from  './utils/buildProgram.js'
 import {Circle} from './shapes/circle.js'
 import * as MatrixOps from './utils/2dmatrixops.js'
 
-const MAX_PARTICLES = 200
+const MAX_PARTICLES = 600
 
 
 function init() {
@@ -42,8 +42,12 @@ function main(canvas, gl) {
     // Get Locations of Variables
     var locOfposAttrb = gl.getAttribLocation(program, "pos");
     var matrixLocation = gl.getUniformLocation(program, "transformation_matrix");
+    var colorLocation = gl.getUniformLocation(program, "colour");
     
-
+    var gustActive = false;
+    var gusty = 0;
+    var gustx = 1;
+    var gustdir = 0;
 
     tick();
 
@@ -54,6 +58,26 @@ function main(canvas, gl) {
 
         function updateParticles() {
             var newParticles = []
+
+            // Handles wind/gust mechanics
+            
+            if (gustActive && (gustx > 1 || gustx < -1)) {
+                gustActive = false;
+            }
+            else if (!gustActive && Math.random() < 0.1) {
+                gustActive = true;
+                gusty = (Math.random()-0.5)*2;
+                if (Math.random() < 0.5) {
+                    gustx = -1;
+                    gustdir = 1;
+                }
+                else {
+                    gustx = 1;
+                    gustdir = -1;
+                }
+            }
+
+
             for (var particle of particles) {
                 if (particle.y + particle.radius >= -1) {
                     newParticles.push(particle);
@@ -61,6 +85,14 @@ function main(canvas, gl) {
                     // Moves particle down by a certain speeed and increases this speed over time.
                     particle.y += particle.v;
                     particle.v -= 0.00001;
+                    
+                    // Handles gust action on particles
+                    if (gustActive && Math.abs(particle.y-gusty)<0.2 && Math.abs(particle.x-gustx)<0.2) {
+
+                        particle.hv += 0.1*gustdir*Math.abs(particle.y-gusty)*Math.abs(particle.x-gustx);
+                        particle.v += (Math.random()-0.8)*0.1*Math.abs(particle.y-gusty)*Math.abs(particle.x-gustx);
+                    }
+
 
                     // Adds horizontal velocity to particle
                     particle.x += particle.hv
@@ -78,6 +110,7 @@ function main(canvas, gl) {
             }
             particles = newParticles
 
+            gustx += 0.1*gustdir;
         }
 
         function renderFrame() {
@@ -110,6 +143,10 @@ function main(canvas, gl) {
 
                 var matrix = MatrixOps.translation(particle.x,particle.y);
                 gl.uniformMatrix3fv(matrixLocation, false, matrix);
+
+                // Colour snow particle
+                gl.uniform4fv(colorLocation, particle.colour);
+                
         
                 var primitiveType = gl.TRIANGLES;
                 var offset = 0;
@@ -129,20 +166,32 @@ function main(canvas, gl) {
 
 function addSnow(gl) {
 
+
+    // Sets a random position for a new snow particle
     var randx = (Math.random()-0.5)*2;
     var randy = (Math.random()-0.5)*2;
+
+    // Creates a particle object
     var circle = new Circle(Math.random()*0.005,randx, randy);
     
+    // Chooses a random direction for snow to move initially
     if (Math.random()<0.5) {
         circle.direction = 0;
     } else {
         circle.direction = 1;
     }
 
+    // Vary colour for snow particles
+    var r = Math.random()*0.2;
+    circle.colour = [1-r,1-r,1-r,1];
+
+    // Creates vertices for the circle and buffers them
     var vertices = circle.getVertices(10);
     var posBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+    // Stores the buffer with the particle
     circle.posBuffer = posBuffer;
     return circle;
 }
