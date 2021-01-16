@@ -226,8 +226,8 @@ document.body.onmousedown = function() {
   document.getElementById('overlay').style.display = 'none';
 }
 
-document.body.ontouchstart = function(event) { 
-    event.preventDefault();
+document.body.ontouchstart = function(e) { 
+    e.preventDefault();
     
     mouseDown++;
     moveMouse(); // Updates touch coords on initial touch
@@ -244,7 +244,7 @@ document.body.onmouseup = function() {
   }
   
 function moveMouse(e) {
-
+    e.preventDefault();
     var gl =  document.getElementById("mainCanvas").getContext("webgl");
     var relPos = getCanvasMousePos(e, gl.canvas);
 
