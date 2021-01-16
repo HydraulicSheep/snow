@@ -240,21 +240,19 @@ document.body.onmouseup = function() {
     mouseDown--;
   }
   
+function moveMouse(e) {
 
-
-window.addEventListener('mousemove', e => {
     var gl =  document.getElementById("mainCanvas").getContext("webgl");
     var relPos = getCanvasMousePos(e, gl.canvas);
 
     mouseX = relPos.x / gl.canvas.width  *  2 - 1;
     mouseY = relPos.y / gl.canvas.height * -2 + 1;
-});
+}
 
-window.addEventListener('touchmove', e => {
-    var gl =  document.getElementById("mainCanvas").getContext("webgl");
-    var relPos = getCanvasMousePos(e, gl.canvas);
 
-    mouseX = relPos.x / gl.canvas.width  *  2 - 1;
-    mouseY = relPos.y / gl.canvas.height * -2 + 1;
-});
+
+  window.addEventListener('mousemove', moveMouse);
+  window.addEventListener('touchmove', moveMouse);
+
+
 
