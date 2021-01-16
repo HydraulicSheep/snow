@@ -228,6 +228,7 @@ document.body.onmousedown = function() {
 
 document.body.ontouchstart = function() { 
     mouseDown++;
+    moveMouse(); // Updates touch coords on initial touch
     document.getElementById('overlay').style.display = 'none';
   }
   
