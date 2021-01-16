@@ -250,6 +250,7 @@ function moveMouse(e) {
 
     mouseX = relPos.x / gl.canvas.width  *  2 - 1;
     mouseY = relPos.y / gl.canvas.height * -2 + 1;
+    return false;
 }
 
 
